@@ -28,20 +28,30 @@ jobs:
       - name: Compile Release
         run: cmake --build build --config Release --parallel
 
+
       - name: Find and collect DLL
         shell: pwsh
         run: |
-          $dll = Get-ChildItem build -Filter dx11z.dll -Recurse |
+          Write-Host "Searching entire workspace for DLL files..."
+
+          $dlls = Get-ChildItem . -Filter *.dll -Recurse -File |
+            Where-Object { $_.FullName -notmatch '\\artifact\\' }
+
+          $dlls | ForEach-Object {
+            Write-Host "$($_.FullName) - $($_.Length) bytes"
+          }
+
+          $dll = $dlls |
+            Where-Object { $_.Name -eq "dx11z.dll" } |
             Select-Object -First 1
 
           if (-not $dll) {
-            Write-Host "DLL not found. Build output:"
-            Get-ChildItem build -Recurse
-            throw "dx11z.dll was not generated."
+            throw "dx11z.dll not found. See DLL listing above."
           }
 
           New-Item -ItemType Directory -Force -Path artifact
           Copy-Item $dll.FullName artifact/dx11z.dll
+
 
       - name: Upload compiled DLL
         uses: actions/upload-artifact@v4
