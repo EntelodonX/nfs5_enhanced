@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: iArtorias/nfs5_enhanced
-          ref: 60b9577
+          ref: master
           fetch-depth: 0
 
       - name: Show source commit
