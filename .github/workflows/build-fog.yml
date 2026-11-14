@@ -14,8 +14,9 @@ jobs:
     steps:
       - name: Get source code
         uses: actions/checkout@v4
-        with:
-          ref: 60b9577
+with:
+  repository: iArtorias/nfs5_enhanced
+  ref: 60b9577
 
       - name: Configure CMake
         run: cmake -S . -B build -A Win32
