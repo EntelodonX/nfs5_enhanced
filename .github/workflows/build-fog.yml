@@ -3,7 +3,7 @@ name: Build NFS5 Enhanced Fog Fix
 
 on:
   workflow_dispatch:
-  
+
 permissions:
   contents: read
 
@@ -12,34 +12,41 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Get source code
+      - name: Checkout source
         uses: actions/checkout@v4
-with:
-  repository: iArtorias/nfs5_enhanced
-  ref: 60b9577
+        with:
+          repository: iArtorias/nfs5_enhanced
+          ref: 60b9577
+          fetch-depth: 0
+
+      - name: Show source commit
+        run: git log -1 --oneline
 
       - name: Configure CMake
         run: cmake -S . -B build -A Win32
 
-      - name: Build Release
-        run: cmake --build build --config Release
+      - name: Compile Release
+        run: cmake --build build --config Release --parallel
 
-      - name: Collect DX11 driver
+      - name: Find and collect DLL
         shell: pwsh
         run: |
           $dll = Get-ChildItem build -Filter dx11z.dll -Recurse |
             Select-Object -First 1
 
           if (-not $dll) {
-            throw "dx11z.dll was not found!"
+            Write-Host "DLL not found. Build output:"
+            Get-ChildItem build -Recurse
+            throw "dx11z.dll was not generated."
           }
 
           New-Item -ItemType Directory -Force -Path artifact
           Copy-Item $dll.FullName artifact/dx11z.dll
 
-      - name: Upload DLL
+      - name: Upload compiled DLL
         uses: actions/upload-artifact@v4
         with:
           name: NFS5-Enhanced-Fog-Fix
           path: artifact/dx11z.dll
           if-no-files-found: error
+          retention-days: 14
